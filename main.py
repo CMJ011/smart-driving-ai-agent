@@ -40,12 +40,10 @@ async def chat_stream(message: UserMessage):
     async def event_generator():
         try:
             async for chunk in run_agent_stream(message.text, message.session_id):
-                # 封装成标准 SSE 格式
                 data = json.dumps({"text": chunk}, ensure_ascii=False)
                 yield f"data: {data}\n\n"
         except Exception as e:
             print(f"⚠️ 后端报错: {e}")
-            # 修复了 f-string 的语法报错，把 json.dumps 提出来
             error_msg = json.dumps({"text": "\n[系统提示] 出现网络或内部错误"}, ensure_ascii=False)
             yield f"data: {error_msg}\n\n"
 
