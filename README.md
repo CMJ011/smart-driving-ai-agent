@@ -28,4 +28,5 @@
 
 ## 📸 效果展示
 <img width="1912" height="959" alt="demo" src="https://github.com/user-attachments/assets/e1841daa-5983-4211-a742-222f16ff96ed" />
-<img width="1912" height="959" alt="demo" src="https://github.com/user-attachments/assets/5715729b-e4cb-4be0-b62d-84799c7afcf7" />
+<img width="1919" height="965" alt="demo2" src="https://github.com/user-attachments/assets/f89f6125-eccb-442d-ba07-089c6fca2f93" />
+
