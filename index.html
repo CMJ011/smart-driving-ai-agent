@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智能驾驶 AI 助手</title>
+    <style>
+        /* 思考中省略号的跳动动画 */
+        .dot {
+            animation: blink 1.4s infinite both;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; }
+            40% { opacity: 1; }
+        }
+
+        /* 重置页面默认边距，让整个网页占满屏幕 */
+        body { 
+            font-family: 'Microsoft YaHei', sans-serif; 
+            background-color: #f4f7f6; 
+            margin: 0; 
+            height: 100vh; /* 高度占满整个视口 */
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* 聊天主容器变成全屏 */
+        .chat-container { 
+            width: 100%; 
+            height: 100vh; 
+            background: white; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* 顶部标题栏变大一点 */
+        .header { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 20px; 
+            text-align: center; 
+            font-size: 20px; 
+            font-weight: bold; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        /* 聊天记录区域：flex: 1 让它自动占满中间所有剩余空间 */
+        .chat-box { 
+            flex: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+            background: #e9ecef; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* 消息气泡样式优化（更圆润，行距更舒服） */
+        .message { 
+            margin-bottom: 15px; 
+            padding: 12px 18px; 
+            border-radius: 12px; 
+            max-width: 75%; /* 最大宽度限制为 75%，防止字太长影响阅读 */
+            word-wrap: break-word; 
+            line-height: 1.6; 
+            font-size: 15px;
+        }
+
+        .user-msg { 
+            background: #3498db; 
+            color: white; 
+            align-self: flex-end; 
+            margin-left: auto; 
+            border-bottom-right-radius: 2px; /* 小细节：右下角变尖，更像聊天气泡 */
+        }
+
+        .ai-msg { 
+            background: white; 
+            color: #333; 
+            border: 1px solid #ddd; 
+            margin-right: auto; 
+            border-bottom-left-radius: 2px; /* 小细节：左下角变尖 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* 底部输入区：加上阴影，固定在底部 */
+        .input-area { 
+            display: flex; 
+            padding: 20px; 
+            background: white; 
+            border-top: 1px solid #ddd; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        input { 
+            flex: 1; 
+            padding: 15px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            outline: none; 
+            font-size: 16px; 
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            border-color: #3498db; /* 选中输入框时边框变蓝 */
+        }
+
+        button { 
+            padding: 15px 30px; 
+            margin-left: 15px; 
+            background: #2ecc71; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px; 
+            transition: background 0.3s;
+        }
+        
+        button:hover { 
+            background: #27ae60; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="header">🚗 智能驾驶 AI 助手</div>
+        <div class="chat-box" id="chatBox">
+            <!-- 聊天记录会显示在这里 -->
+            <div class="message ai-msg">你好！我是智能驾驶助手，有什么可以帮你的吗？</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="请输入你的问题..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+                async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chatBox = document.getElementById('chatBox');
+
+            // 1. 显示用户消息
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user-msg';
+            userDiv.innerText = text;
+            chatBox.appendChild(userDiv);
+            input.value = ''; 
+
+            // 2. 显示“思考中”动画
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message ai-msg';
+            loadingDiv.innerHTML = '思考中<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>'; 
+            chatBox.appendChild(loadingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const sessionId = window.sessionId || (window.sessionId = Math.random().toString(36).substring(7));
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/chat_stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text, session_id: sessionId })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let aiReply = '';
+                let isFirstChunk = true;
+                let buffer = ''; // 用来处理被网络截断的数据
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    // 将新接收的片段加入缓冲区
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    // 按双换行符拆分完整的 SSE 消息包
+                    const parts = buffer.split('\n\n');
+                    // 最后一部分可能是不完整的，留在缓冲区里等下一波数据
+                    buffer = parts.pop(); 
+
+                    for (const part of parts) {
+                        if (part.startsWith('data: ')) {
+                            const dataStr = part.substring(6).trim();
+                            if (dataStr) {
+                                try {
+                                    const dataObj = JSON.parse(dataStr);
+                                    
+                                    if (isFirstChunk && dataObj.text) {
+                                        loadingDiv.innerHTML = '';
+                                        isFirstChunk = false;
+                                    }
+                                    
+                                    aiReply += dataObj.text;
+                                    loadingDiv.innerText = aiReply;
+                                    chatBox.scrollTop = chatBox.scrollHeight;
+                                } catch (e) {
+                                    console.error("解析失败:", dataStr);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                loadingDiv.innerText = '网络请求失败，请检查后端服务。';
+                console.error(error);
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // 支持按回车键发送
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
