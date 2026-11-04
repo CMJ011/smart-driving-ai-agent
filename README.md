@@ -27,4 +27,5 @@
    直接用浏览器打开 `index.html` 即可。
 
 ## 📸 效果展示
-*(这里可以把你刚才截图的笑话或者去机场的截图贴进来)*
+<img width="1912" height="959" alt="demo" src="https://github.com/user-attachments/assets/e1841daa-5983-4211-a742-222f16ff96ed" />
+<img width="1912" height="959" alt="demo" src="https://github.com/user-attachments/assets/5715729b-e4cb-4be0-b62d-84799c7afcf7" />
